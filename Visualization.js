@@ -9,7 +9,7 @@ provides: [Fx/Step]
 
 (function(){
     this.Visualization = new Class({
-        data : null,
+        data : {},
         element : null,
         options : {},
         nodes : {},

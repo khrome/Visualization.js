@@ -1,7 +1,7 @@
 /*
 ---
 name: ART.SVG++
-description: "SVG mods for animation"
+description: "I munge ART for the good of the many"
 provides: [ART.SVG++]
 requires: [ART, ART.Element, ART.Container, ART.Transform, ART.Path, ART.SVG]
 ...

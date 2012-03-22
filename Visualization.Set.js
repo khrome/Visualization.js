@@ -8,6 +8,24 @@ provides: [Fx/Step]
 */
 
 (function(){
+    function orderSet(unorderedSet, axis, direction){
+        if(!direction) direction ='';
+        if(unorderedSet.length == 0) return unorderedSet;
+        if(!(unorderedSet[0] && unorderedSet[0][axis])) throw('cannot sort on invalid axis');
+        switch(direction.toLowerCase()){
+            case 'descending':
+            case 'desc':
+                direction = Array.DESCENDING;
+                break;
+            case 'ascending':
+            case 'asc':
+            default:
+                direction = 0;
+        }
+        if(typeOf(unorderedSet[0][axis]) == 'number') unorderedSet.sortOn(axis, Array.NUMERIC | direction);
+        else unorderedSet.sortOn(axis, Array.CASEINSENSITIVE | direction);
+        return unorderedSet;
+    }
     Visualization.Set = new Class({
         data : [],
         groupings : {},
@@ -18,6 +36,7 @@ provides: [Fx/Step]
             'ready' : []
         },
         cache : {},
+        orderingCache : {},
         initialize : function(data){
             if(data) this.add(data);
         },
@@ -33,23 +52,21 @@ provides: [Fx/Step]
             });
             return result;
         },
-        order : function(axis, direction){
-            if(!direction) direction ='';
-            if(this.data.length == 0) return;
-            if(!(this.data[0] && this.data[0][axis])) throw('cannot sort on invalid axis');
-            switch(direction.toLowerCase()){
-                case 'descending':
-                case 'descending':
-                    direction = Array.DESCENDING;
-                    break;
-                case 'ascending':
-                case 'asc':
-                default:
-                    direction = 0;
-                    
+        each : function(fn, ordering){
+            if(ordering){
+                if(typeOf(ordering) == 'string') ordering = {axis:ordering};
+                this.data.ordered(ordering.axis, ordering.direction).each(fn);
+            }else this.data.each(fn);
+        },
+        ordered : function(axis, direction){
+            var key = axis+':'+direction;
+            if(!this.orderingCache[key]){
+                this.orderingCache[key] = orderSet(this.data.clone(), axis, direction);
             }
-            if(typeOf(this.data[0][axis]) == 'number') this.data.sortOn(axis, Array.NUMERIC | direction);
-            else this.data.sortOn(axis, Array.CASEINSENSITIVE | direction);
+            return this.orderingCache[key];
+        },
+        order : function(axis, direction){
+            orderSet(this.data, axis, direction);
             this.listeners.change.each(function(listener){ listener(this.data); }.bind(this));
         },
         minimum : function(axis){
@@ -80,6 +97,7 @@ provides: [Fx/Step]
                 if( (!position) && (!item.id) ) throw('no identifier: ambiguous node alter!');
                 if(!position) position = this.position(item.id);
                 //delete item.id;
+                this.cache[axis] ={};
                 Object.each(item, function(value, key){
                     //console.log(['set', key, value]);
                     this.data[position][key] = value;
@@ -91,6 +109,7 @@ provides: [Fx/Step]
                     func(obj);
                 });
             }else func(item, position);
+            this.orderingCache = {};
             this.listeners.change.each(function(listener){ listener(this.data[position]); }.bind(this));
         },
         uuid: function(){

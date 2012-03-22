@@ -26,6 +26,22 @@ provides: [Fx/Step]
             if(!options.topPadding) options.topPadding = 10;
             if(!options.bottomPadding) options.bottomPadding = 10;
             this.parent(element, options);
+            this.data.minimum = function(){
+                var res;
+                Object.each(this.data, function(currentSet, setName){
+                    var value = currentSet.minimum();
+                    if(res < value) value = res;
+                });
+                return res;
+            };
+            this.data.maximum = function(){
+                var res;
+                Object.each(this.data, function(currentSet, setName){
+                    var value = currentSet.maximum();
+                    if(res < value) value = res;
+                });
+                return res;
+            };
         },
         computeBoundaries : function(){
             
@@ -39,6 +55,7 @@ provides: [Fx/Step]
             var x_max = this.data.maximum('x');
             var range = x_max - x_min;
             var padSize = this.options.leftPadding + this.options.rightPadding;
+            //console.log(['xs', x_min, x_max, range, padSize]);
             var result = this.options.leftPadding + (x-x_min)*((this.element.getSize().x-padSize)/range);
             return result;
         },
@@ -52,13 +69,20 @@ provides: [Fx/Step]
         },
         redraw : function(){
             this.update();
-            this.data.data.each(function(item, position){
-                if(this.options.node){
-                    if(!this.nodes[position]){
+            if( this.data instanceof Visualization.Sets){
+                this.data.eachSeries(function(series, seriesName){
+                    series.each(function(item, index){
+                        if(this.options.node && !this.nodes[index]) 
+                            this.nodes[index] = this.options.node.create(item);
+                    }.bind(this));
+                }.bind(this));
+            }else{
+                this.data.data.each(function(item, position){
+                    if(this.options.node && !this.nodes[position]){
                         this.nodes[position] = this.options.node.create(item);
                     }
-                }
-            }.bind(this));
+                }.bind(this));
+            }
         },
         update : function(){ //global draw elements for the graph
             var x_min = this.data.minimum('x');

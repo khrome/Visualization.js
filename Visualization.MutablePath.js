@@ -45,7 +45,6 @@ provides: [Fx/Step]
             if(typeOf(value) == 'string'){
                 value = parse(value);
             }
-            //console.log(['altered value', value, typeOf(position), this.changed]);
             if(value.length-1 != parameterCount[value[0].trim().toLowerCase()]) throw 'parameter count error for line segment '+value[0]+'('+value.length+' instead of '+parameterCount[value[0].trim().toLowerCase()]+')';
             if(!this.path[position] && position == this.path.length){
                 this.path.push(value);

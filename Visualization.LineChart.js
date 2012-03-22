@@ -13,6 +13,7 @@ Visualization.LineChart = new Class({
     Extends : Visualization.TwoAxis,
     markers: [],
     initialize: function(element, options){
+        this.data = new Visualization.Sets();
         if(!options) options = {};
         if(!options.x_axis) options.x_axis = 'x';
         if(!options.y_axis) options.y_axis = 'y';
@@ -56,8 +57,18 @@ Visualization.LineChart = new Class({
             return this.markers[id];
         }
     },
-    bind : function(seriesName, data){
-        this.data[seriesName] = data;
+    bind : function(data, name){
+        if(data instanceof Visualization.Sets){
+            this.data = data;
+            this.data.eachSeries(function(series, name){
+                this.createElements(series, name);
+            }.bind(this));
+        }else{
+            this.data.add(name, data);
+            this.createElements(data, name);
+        }
+    },
+    createElements : function(data, name){
         this.redraw();
         data.addEvent('change', function(changes){
             changes = Array.from(changes);
@@ -68,7 +79,7 @@ Visualization.LineChart = new Class({
                 var effect = new Fx.Step(shape, {
                     link : 'chain',
                     setter : function(x, y){
-                        var position = graph.data.position(item);
+                        var position = graph.data.position(name, item);
                         var thisShape = graph.node(position);
                         thisShape.centroidMoveTo(x, y);
                         if(position == 0) graph.line.alterSegment(position, ['M', x, y]);
@@ -88,30 +99,23 @@ Visualization.LineChart = new Class({
     update : function(){ //global draw elements for the graph
         this.parent();
         var size = this.element.getSize();
-        this.data.each(function(series){
-            if(!this.line[series]){
-                this.line[series] = new Visualization.MutablePath();
-                series.data.each(function(node, position){
-                    if(position == 0) this.line.alterSegment(position, [
-                        'M', 
-                        this.xScale(node[this.options.x_axis]), 
-                        this.yScale(node[this.options.y_axis])
-                    ]);
-                    else this.line.alterSegment(position, [
-                        'L', 
-                        this.xScale(node[this.options.x_axis]), 
-                        this.yScale(node[this.options.y_axis])
-                    ]);
-                }.bind(this));
-            }
-            if(!this.lineShape[series]){ //create
-                this.lineShape[series] = new ART.Shape(this.line, size.x, size.y);
-                this.lineShape[series].inject(this.art);
-                if(this.options.events && this.options.events.create) this.options.events.create.bind(this)();
-            }else{ //update
-                this.lineShape[series].repaint();
-            }
-        }.bind(this));
+        if(!this.line){
+            this.line = new Visualization.MutablePath();
+            this.data.each(function(node, position){
+                var x = this.xScale(node[this.options.x_axis]);
+                var y = this.yScale(node[this.options.y_axis]);
+                //console.log(['vars', x , y, node, node[this.options.y_axis]]);
+                if(position == 0) this.line.alterSegment(position, [ 'M', x, y ]);
+                else this.line.alterSegment(position, [ 'L', x, y ]);
+            }.bind(this));
+        }
+        if(!this.lineShape){ //create
+            this.lineShape = new ART.Shape(this.line, size.x, size.y);
+            this.lineShape.inject(this.art);
+            if(this.options.events && this.options.events.create) this.options.events.create.bind(this)();
+        }else{ //update
+            this.lineShape.repaint();
+        }
     },
     select : function(node){
     
