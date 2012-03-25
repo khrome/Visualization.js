@@ -9,11 +9,11 @@ provides: [Fx/Step]
 
 (function(){
     function makeLine(x1, y1, x2, y2){
-        var path = new ART.Path();
+        var path = new Visualization.MutablePath();
         path.moveTo(x1, y1);
         path.lineTo(x2, y2);
         var result = new ART.Shape(path);
-        result.element.setStyle('stroke', 'lightblue');
+        result.element.setStyle('stroke', '#737477');
         result.element.setStyle('fill', 'none');
         return result;
     }
@@ -55,7 +55,6 @@ provides: [Fx/Step]
             var x_max = this.data.maximum('x');
             var range = x_max - x_min;
             var padSize = this.options.leftPadding + this.options.rightPadding;
-            //console.log(['xs', x_min, x_max, range, padSize]);
             var result = this.options.leftPadding + (x-x_min)*((this.element.getSize().x-padSize)/range);
             return result;
         },
@@ -72,8 +71,9 @@ provides: [Fx/Step]
             if( this.data instanceof Visualization.Sets){
                 this.data.eachSeries(function(series, seriesName){
                     series.each(function(item, index){
-                        if(this.options.node && !this.nodes[index]) 
-                            this.nodes[index] = this.options.node.create(item);
+                        if(this.options.node) 
+                            if(!this.nodes[seriesName]) this.nodes[seriesName] = [];
+                            if(!this.nodes[seriesName][index]) this.nodes[seriesName][index] = this.options.node.create(item, seriesName);
                     }.bind(this));
                 }.bind(this));
             }else{
@@ -107,12 +107,27 @@ provides: [Fx/Step]
                 for(var lcv=0; lcv < segments; lcv++){
                     var x = this.options.leftPadding + lcv * horizontal_increment;
                     var y = this.options.topPadding + lcv * vertical_increment;
-                    var horizontal_line = (makeLine(this.options.leftPadding, y, this.xScale(x_max), y));
-                    var vertical_line = (makeLine(x, this.options.topPadding, x, this.yScale(y_max)));
-                    vertical_line.inject(this.art);
-                    horizontal_line.inject(this.art);
-                    this.graduations.horizontal[lcv] = horizontal_line;
-                    this.graduations.vertical[lcv] = vertical_line;
+                    var horizontal_line, vertical_line;
+                    if(!this.graduations.horizontal[lcv]){
+                        horizontal_line = (makeLine(this.options.leftPadding, y, this.xScale(x_max), y));
+                        horizontal_line.inject(this.art);
+                        this.graduations.horizontal[lcv] = horizontal_line;
+                    }else{
+                        //alter
+                        this.graduations.horizontal[lcv].path.alterSegment(0, ['M', this.options.leftPadding, y]);
+                        this.graduations.horizontal[lcv].path.alterSegment(1, ['L', this.xScale(x_max), y]);
+                        this.graduations.horizontal[lcv].repaint();
+                    }
+                    if(!this.graduations.vertical[lcv]){
+                        vertical_line = (makeLine(x, this.options.topPadding, x, this.yScale(y_max)));
+                        vertical_line.inject(this.art);
+                        this.graduations.vertical[lcv] = vertical_line;
+                    }else{
+                        //alter
+                        this.graduations.vertical[lcv].path.alterSegment(0, ['M', x, this.options.topPadding]);
+                        this.graduations.vertical[lcv].path.alterSegment(1, ['L', x, this.yScale(y_max)]);
+                        this.graduations.vertical[lcv].repaint();
+                    }
                 }
                 this.xMin = x_min;
                 this.yMin = y_min;

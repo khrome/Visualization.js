@@ -11,7 +11,10 @@ provides: [Fx/Step]
 
 Visualization.LineChart = new Class({
     Extends : Visualization.TwoAxis,
-    markers: [],
+    markers: {},
+    line:{},
+    lineShape:{},
+    closing:{},
     initialize: function(element, options){
         this.data = new Visualization.Sets();
         if(!options) options = {};
@@ -25,10 +28,12 @@ Visualization.LineChart = new Class({
         if(options.node){
             if(!options.node.size) options.node.size = 8;
             if(!options.node.mouseover_scale) options.node.mouseover_scale = 2;
-            if(!options.node.create) options.node.create = function(node){
+            if(!options.node.create) options.node.create = function(node, name){
                 var marker = new ART.Ellipse(options.node.size, options.node.size);
-                var offset = options.node.size/2;
-                marker.move(this.xScale(node[options.x_axis])-offset, this.yScale(node[options.y_axis])-offset);
+                marker.offset = options.node.size/2;
+                marker.xa = node[options.x_axis];
+                marker.ya = node[options.y_axis];
+                marker.moveTo(this.xScale(marker.xa)-marker.offset, this.yScale(marker.ya)-marker.offset);
                 marker.inject(art);
                 marker.element.setAttribute('class', 'node');
                 marker.element.addEvent('click', function(){
@@ -41,20 +46,21 @@ Visualization.LineChart = new Class({
                     if(options.node.events && options.node.events.mouseout) options.node.events.mouseout(marker);
                 }.bind(this));
                 marker.id = node.id;
-                this.markers.push(marker);
+                if(!this.markers[name]) this.markers[name] = [];
+                this.markers[name].push(marker);
                 if(options.node.events && options.node.events.create) options.node.events.create(marker);
                 return marker;
             }.bind(this);
         }
         this.parent(element, options);
     },
-    node : function(id){
-        if(typeOf(id)== 'string'){
+    node : function(seriesName, id){
+        if(typeOf(id) == 'string'){
             var result = false;
-            this.markers.each(function(marker){ if(marker.id == id) result = marker; });
+            this.markers[seriesName].each(function(marker){ if(marker.id == id) result = marker; });
             return result;
         }else{ //by position
-            return this.markers[id];
+            return this.markers[seriesName][id];
         }
     },
     bind : function(data, name){
@@ -68,23 +74,42 @@ Visualization.LineChart = new Class({
             this.createElements(data, name);
         }
     },
+    makeDraggable : function(){
+        var viz = this.element.getChildren()[0];
+        var resize = function(){
+            viz.setStyle('height', this.element.getStyle('height'));
+            viz.setStyle('width', this.element.getStyle('width'));
+            this.data.eachSeries(function(series, seriesName){
+                this.lineShape[seriesName].repaint();
+                this.markers[seriesName].each(function(marker){
+                    marker.moveTo(this.xScale(marker.xa)-marker.offset, this.yScale(marker.ya)-marker.offset);
+                }.bind(this))
+            }.bind(this));
+            this.update();
+        }.bind(this);
+        this.element.makeResizable({
+            onDrag : resize,
+            grid : 100
+        });
+    },
     createElements : function(data, name){
         this.redraw();
         data.addEvent('change', function(changes){
             changes = Array.from(changes);
             changes.each(function(item, changePosition){
-                shape = this.node(changePosition);
+                shape = this.node(name, changePosition);
                 graph = this;
+                var seriesName = name;
                 var offset = this.options.node.size/2;
                 var effect = new Fx.Step(shape, {
                     link : 'chain',
                     setter : function(x, y){
-                        var position = graph.data.position(name, item);
-                        var thisShape = graph.node(position);
+                        var position = graph.data.position(seriesName, item);
+                        var thisShape = graph.node(seriesName, changePosition);
                         thisShape.centroidMoveTo(x, y);
-                        if(position == 0) graph.line.alterSegment(position, ['M', x, y]);
-                        else graph.line.alterSegment(position, ['L', x, y]);
-                        graph.lineShape.repaint();
+                        if(position == 0) graph.line[seriesName].alterSegment(changePosition, ['M', x, y]);
+                        else graph.line[seriesName].alterSegment(changePosition, ['L', x, y]);
+                        graph.lineShape[seriesName].repaint();
                     },
                     args : ['x', 'y']
                 });
@@ -99,23 +124,34 @@ Visualization.LineChart = new Class({
     update : function(){ //global draw elements for the graph
         this.parent();
         var size = this.element.getSize();
-        if(!this.line){
-            this.line = new Visualization.MutablePath();
-            this.data.each(function(node, position){
-                var x = this.xScale(node[this.options.x_axis]);
-                var y = this.yScale(node[this.options.y_axis]);
-                //console.log(['vars', x , y, node, node[this.options.y_axis]]);
-                if(position == 0) this.line.alterSegment(position, [ 'M', x, y ]);
-                else this.line.alterSegment(position, [ 'L', x, y ]);
-            }.bind(this));
-        }
-        if(!this.lineShape){ //create
-            this.lineShape = new ART.Shape(this.line, size.x, size.y);
-            this.lineShape.inject(this.art);
-            if(this.options.events && this.options.events.create) this.options.events.create.bind(this)();
-        }else{ //update
-            this.lineShape.repaint();
-        }
+        this.data.eachSeries(function(series, seriesName){
+            //console.log('updating series '+seriesName);
+            if(!this.line[seriesName]){
+                this.line[seriesName] = new Visualization.MutablePath();
+                //if(this.closing[seriesName]) this.line[seriesName].alterSegment(position, [ 'M', x, y ]);
+                series.each(function(node, position){
+                    var x = this.xScale(node[this.options.x_axis]);
+                    var y = this.yScale(node[this.options.y_axis]);
+                    if(position == 0) this.line[seriesName].alterSegment(position, [ 'M', x, y ]);
+                    else this.line[seriesName].alterSegment(position, [ 'L', x, y ]);
+                }.bind(this));
+            }else{
+                series.each(function(node, position){
+                    var x = this.xScale(node[this.options.x_axis]);
+                    var y = this.yScale(node[this.options.y_axis]);
+                    if(position == 0) this.line[seriesName].alterSegment(position, [ 'M', x, y ]);
+                    else this.line[seriesName].alterSegment(position, [ 'L', x, y ]);
+                }.bind(this));
+            }
+            if(!this.lineShape[seriesName]){ //create
+                this.lineShape[seriesName] = new ART.Shape(this.line[seriesName], size.x, size.y);
+                this.lineShape[seriesName].element.setStyle('stroke-width', '2px');
+                this.lineShape[seriesName].inject(this.art);
+                if(this.options.events && this.options.events.create) this.options.events.create.bind(this)(this.lineShape[seriesName], this.line[seriesName]);
+            }else{ //update
+                this.lineShape[seriesName].repaint();
+            }
+        }.bind(this));
     },
     select : function(node){
     

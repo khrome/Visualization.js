@@ -29,6 +29,7 @@ provides: [Fx/Step]
             }.bind(this));
         },
         addEvent : function(setName, type, callback){
+            //console.log(['evv', setName, type, callback]);
             if(!this.data[setName]) throw('Trying to operate on nonexistent set: '+setName);
             return this.data[setName].addEvent(type, callback);
         },
@@ -37,9 +38,18 @@ provides: [Fx/Step]
             return this.data[setName].position(id);
         },
         order : function(setName, axis, direction){
-            if(!this.data[setName]) throw('Trying to operate on nonexistent set: '+setName);
-            return this.data[setName].order(axis, direction);
-            //todo: with and without set name order(setName, axis, direction), order(axis, direction), order(setName, axis), order(axis)
+            if( (!axis) && (!direction)){
+                axis = setName;
+                delete setName; //this is where readability trumps efficiency
+                this.series().each(function(seriesName, position){
+                    var data = this.data[seriesName];
+                    data.order(axis);
+                }.bind(this));
+            }else{
+                if(!this.data[setName]) throw('Trying to operate on nonexistent set: '+setName);
+                return this.data[setName].order(axis, direction);
+                //todo: with and without set name order(setName, axis, direction), order(axis, direction), order(setName, axis), order(axis)
+            }
         },
         minimum : function(setName, axis){
             if(setName && !axis){
