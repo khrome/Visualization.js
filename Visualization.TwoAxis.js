@@ -25,6 +25,7 @@ provides: [Fx/Step]
             if(!options.leftPadding) options.leftPadding = 10;
             if(!options.topPadding) options.topPadding = 10;
             if(!options.bottomPadding) options.bottomPadding = 10;
+            if(!options.labelColor) options.labelColor = '#bee3f9';
             this.parent(element, options);
             this.data.minimum = function(){
                 var res;
@@ -53,18 +54,19 @@ provides: [Fx/Step]
         xScale : function(x){
             var x_min = this.data.minimum('x');
             var x_max = this.data.maximum('x');
-            var range = x_max - x_min;
             var padSize = this.options.leftPadding + this.options.rightPadding;
+            var range = x_max - x_min;
             var result = this.options.leftPadding + (x-x_min)*((this.element.getSize().x-padSize)/range);
             return result;
         },
         yScale : function(y){
             var y_min = this.data.minimum('y');
             var y_max = this.data.maximum('y');
-            var range = y_max - y_min;
             var padSize = this.options.topPadding + this.options.bottomPadding;
-            var result = this.options.topPadding + (y-y_min)*((this.element.getSize().y-padSize)/range);
-            return result;
+            var range = y_max - y_min;
+            var height = this.element.getSize().y;
+            var result = this.options.topPadding + (y-y_min)*((height-padSize)/range);
+            return height-result;
         },
         redraw : function(){
             this.update();
@@ -91,10 +93,11 @@ provides: [Fx/Step]
             var y_max = this.data.maximum('y');
             var segments = 8;
             if(
-                ( (!this.xMin) || x_min < this.xMin) ||
-                ( (!this.yMin) || y_min < this.yMin) ||
-                ( (!this.xMax) || x_max > this.xMax) ||
-                ( (!this.yMax) || y_max > this.yMax)
+                //( (!this.xMin) || x_min < this.xMin) ||
+                //( (!this.yMin) || y_min < this.yMin) ||
+                //( (!this.xMax) || x_max > this.xMax) ||
+                //( (!this.yMax) || y_max > this.yMax)
+                true
             ){
                 var horizontal_range = x_max - x_min;
                 var horizontal_padding = this.options.leftPadding + this.options.rightPadding;
@@ -104,27 +107,66 @@ provides: [Fx/Step]
                 horizontal_max = this.options.leftPadding + segments * horizontal_increment;
                 vertical_increment = ((vertical_range)*((this.element.getSize().y-vertical_padding)/vertical_range))/(segments-1);
                 vertical_max = this.options.topPadding + segments * vertical_increment;
+                mincrement = Math.min(horizontal_increment, vertical_increment);
                 for(var lcv=0; lcv < segments; lcv++){
                     var x = this.options.leftPadding + lcv * horizontal_increment;
                     var y = this.options.topPadding + lcv * vertical_increment;
                     var horizontal_line, vertical_line;
+                    var label = Math.floor(y_min + (segments - lcv-1) * vertical_increment);
                     if(!this.graduations.horizontal[lcv]){
-                        horizontal_line = (makeLine(this.options.leftPadding, y, this.xScale(x_max), y));
+                        horizontal_line = (makeLine(this.xScale(x_min), y, this.xScale(x_max), y));
+                        horizontal_line.label = new ART.Text(label);
+                        horizontal_line.label.moveTo(this.xScale(x_min), y);
+                        horizontal_line.label.resizeTo(
+                            (mincrement/8)*String.from(label).length,
+                            mincrement/3
+                        );
+                        horizontal_line.label.element.setAttribute('fill', this.options.labelColor);
+                        horizontal_line.label.inject(this.art);
                         horizontal_line.inject(this.art);
                         this.graduations.horizontal[lcv] = horizontal_line;
                     }else{
-                        //alter
-                        this.graduations.horizontal[lcv].path.alterSegment(0, ['M', this.options.leftPadding, y]);
+                        if(this.graduations.horizontal[lcv].label){
+                            this.graduations.horizontal[lcv].label.moveTo(this.xScale(x_min), y);
+                            this.graduations.horizontal[lcv].label.resizeTo((mincrement/8)*String.from(label).length, mincrement/3);
+                            if(lcv == segments-1){
+                                this.graduations.horizontal[lcv].label.move(0, -1*vertical_increment/2);
+                                //console.log('surprise, you\'re dead')
+                            }
+                        }
+                        this.graduations.horizontal[lcv].path.alterSegment(0, ['M', this.xScale(x_min), y]);
                         this.graduations.horizontal[lcv].path.alterSegment(1, ['L', this.xScale(x_max), y]);
                         this.graduations.horizontal[lcv].repaint();
                     }
                     if(!this.graduations.vertical[lcv]){
-                        vertical_line = (makeLine(x, this.options.topPadding, x, this.yScale(y_max)));
+                        vertical_line = (makeLine(x, this.yScale(y_min), x, this.yScale(y_max)));
+                        vertical_line.label = new ART.Text(Math.floor(x_min + (lcv) * horizontal_increment));
+                        vertical_line.label.moveTo(x, this.yScale(y_min));
+                        vertical_line.label.resizeTo(
+                            (mincrement/8)*String.from(label).length,
+                            mincrement/3
+                        );
+                        vertical_line.label.element.setAttribute('fill', this.options.labelColor);
+                        vertical_line.label.inject(this.art);
                         vertical_line.inject(this.art);
                         this.graduations.vertical[lcv] = vertical_line;
                     }else{
-                        //alter
-                        this.graduations.vertical[lcv].path.alterSegment(0, ['M', x, this.options.topPadding]);
+                        if(this.graduations.vertical[lcv].label){
+                            this.graduations.vertical[lcv].label.moveTo(x, this.yScale(y_min)-mincrement/3);
+                            this.graduations.vertical[lcv].label.resizeTo(
+                                (mincrement/8)*String.from(label).length,
+                                mincrement/3
+                            );
+                            if(lcv == 0){
+                                this.graduations.vertical[lcv].label.move(horizontal_increment/2 - (mincrement/8)*String.from(label).length, 0);
+                                //console.log('surprise, you\'re dead')
+                            }
+                            if(lcv == segments-1){
+                                this.graduations.vertical[lcv].label.move((mincrement/8)*String.from(label).length-horizontal_increment/2, 0);
+                            }
+                            this.graduations.vertical[lcv].label.rotateTo(-45);
+                        }
+                        this.graduations.vertical[lcv].path.alterSegment(0, ['M', x, this.yScale(y_min)]);
                         this.graduations.vertical[lcv].path.alterSegment(1, ['L', x, this.yScale(y_max)]);
                         this.graduations.vertical[lcv].repaint();
                     }

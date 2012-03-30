@@ -53,7 +53,7 @@ provides: [Fx/Step]
         },
         minimum : function(setName, axis){
             if(setName && !axis){
-                var res = 0;
+                var res = Number.MAX_VALUE;
                 axis = setName;
                 Object.each(this.data, function(currentSet, setName){
                     var value = currentSet.minimum(axis);
@@ -93,7 +93,7 @@ provides: [Fx/Step]
         },
         maximum : function(setName, axis){
             if(setName && !axis){
-                var res = 0;
+                var res = Number.MIN_VALUE;
                 axis = setName;
                 Object.each(this.data, function(currentSet, setName){
                     var value = currentSet.maximum(axis);

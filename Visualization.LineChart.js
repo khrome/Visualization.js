@@ -14,7 +14,7 @@ Visualization.LineChart = new Class({
     markers: {},
     line:{},
     lineShape:{},
-    closing:{},
+    closed:{},
     initialize: function(element, options){
         this.data = new Visualization.Sets();
         if(!options) options = {};
@@ -77,6 +77,8 @@ Visualization.LineChart = new Class({
     makeDraggable : function(){
         var viz = this.element.getChildren()[0];
         var resize = function(){
+            if(this.element.getStyle('height') > this.element.getStyle('width')) this.element.setStyle('width', this.element.getStyle('height'));
+            else this.element.setStyle('height', this.element.getStyle('width'));
             viz.setStyle('height', this.element.getStyle('height'));
             viz.setStyle('width', this.element.getStyle('width'));
             this.data.eachSeries(function(series, seriesName){
@@ -89,7 +91,8 @@ Visualization.LineChart = new Class({
         }.bind(this);
         this.element.makeResizable({
             onDrag : resize,
-            grid : 100
+            snap : 100,
+            limit : {x:[100, 500], y:[100, 500]}
         });
     },
     createElements : function(data, name){
@@ -122,36 +125,58 @@ Visualization.LineChart = new Class({
         }.bind(this));
     },
     update : function(){ //global draw elements for the graph
-        this.parent();
         var size = this.element.getSize();
         this.data.eachSeries(function(series, seriesName){
-            //console.log('updating series '+seriesName);
             if(!this.line[seriesName]){
                 this.line[seriesName] = new Visualization.MutablePath();
-                //if(this.closing[seriesName]) this.line[seriesName].alterSegment(position, [ 'M', x, y ]);
+                if(this.closed[seriesName]) this.line[seriesName].alterSegment(0, [ 
+                    'M', 
+                    this.xScale(series.data[0][this.options.x_axis]),
+                    this.yScale(series.minimum('y'))
+                ]);
                 series.each(function(node, position){
+                    if(this.closed[seriesName]) position++;
                     var x = this.xScale(node[this.options.x_axis]);
                     var y = this.yScale(node[this.options.y_axis]);
                     if(position == 0) this.line[seriesName].alterSegment(position, [ 'M', x, y ]);
                     else this.line[seriesName].alterSegment(position, [ 'L', x, y ]);
                 }.bind(this));
+                if(this.closed[seriesName]) this.line[seriesName].alterSegment(series.data.length+1, [ 
+                    'L', 
+                    this.xScale(series.data[series.data.length-1][this.options.x_axis]),
+                    this.yScale(series.minimum('y'))
+                ]);
+                //console.log([seriesName, this.line[seriesName], this.line[seriesName].toSVG()]);
             }else{
+                if(this.closed[seriesName]) this.line[seriesName].alterSegment(0, [ 
+                    'M', 
+                    this.xScale(series.data[0][this.options.x_axis]),
+                    this.yScale(series.minimum('y'))
+                ]);
                 series.each(function(node, position){
+                    if(this.closed[seriesName]) position++;
                     var x = this.xScale(node[this.options.x_axis]);
                     var y = this.yScale(node[this.options.y_axis]);
                     if(position == 0) this.line[seriesName].alterSegment(position, [ 'M', x, y ]);
                     else this.line[seriesName].alterSegment(position, [ 'L', x, y ]);
                 }.bind(this));
+                if(this.closed[seriesName]) this.line[seriesName].alterSegment(series.data.length+1, [ 
+                    'L', 
+                    this.xScale(series.data[series.data.length-1][this.options.x_axis]),
+                    this.yScale(series.minimum('y'))
+                ]);
             }
             if(!this.lineShape[seriesName]){ //create
                 this.lineShape[seriesName] = new ART.Shape(this.line[seriesName], size.x, size.y);
                 this.lineShape[seriesName].element.setStyle('stroke-width', '2px');
+                if(this.closed[seriesName]) this.lineShape[seriesName].closed = true;
                 this.lineShape[seriesName].inject(this.art);
                 if(this.options.events && this.options.events.create) this.options.events.create.bind(this)(this.lineShape[seriesName], this.line[seriesName]);
             }else{ //update
                 this.lineShape[seriesName].repaint();
             }
         }.bind(this));
+        this.parent();
     },
     select : function(node){
     

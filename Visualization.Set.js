@@ -11,7 +11,7 @@ provides: [Fx/Step]
     function orderSet(unorderedSet, axis, direction){
         if(!direction) direction ='';
         if(unorderedSet.length == 0) return unorderedSet;
-        if(!(unorderedSet[0] && unorderedSet[0][axis])) throw('cannot sort on invalid axis');
+        //if(!(unorderedSet[0] && unorderedSet[0][axis])) console.log(unorderedSet); //throw('cannot sort on invalid axis');
         switch(direction.toLowerCase()){
             case 'descending':
             case 'desc':
@@ -41,7 +41,6 @@ provides: [Fx/Step]
             if(data) this.add(data);
         },
         addEvent : function(type, callback){
-            //console.log(['evr', type, callback]);
             if(!this.listeners[type]) throw('Unsupported event type: '+type);
             this.listeners[type].push(callback);
         },
