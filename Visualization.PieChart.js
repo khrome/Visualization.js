@@ -114,7 +114,6 @@ Visualization.PieChart = new Class({
                     setter : function(scale, direction){
                         graph.wedge[seriesName].scaleTo(scale);
                         var delta = scale-1;
-                        console.log(x + delta*(radius));
                         graph.wedge[seriesName].moveTo(x + -1*delta*radius, y + -1*delta*radius);
                     },
                     args : ['scale', 'direction']

@@ -51,17 +51,29 @@ provides: [Fx/Step]
             this.data = data;
             this.redraw();
         },
+        xMin : function(){
+            return this.data.minimum('x');
+        },
+        yMin : function(){
+            return this.data.minimum('y');
+        },
+        xMax : function(){
+            return this.data.maximum('x');
+        },
+        yMax : function(){
+            return this.data.maximum('y');
+        },
         xScale : function(x){
-            var x_min = this.data.minimum('x');
-            var x_max = this.data.maximum('x');
+            var x_min = this.xMin();
+            var x_max = this.xMax();
             var padSize = this.options.leftPadding + this.options.rightPadding;
             var range = x_max - x_min;
             var result = this.options.leftPadding + (x-x_min)*((this.element.getSize().x-padSize)/range);
             return result;
         },
         yScale : function(y){
-            var y_min = this.data.minimum('y');
-            var y_max = this.data.maximum('y');
+            var y_min = this.yMin();
+            var y_max = this.yMax();
             var padSize = this.options.topPadding + this.options.bottomPadding;
             var range = y_max - y_min;
             var height = this.element.getSize().y;
@@ -75,7 +87,7 @@ provides: [Fx/Step]
                     series.each(function(item, index){
                         if(this.options.node) 
                             if(!this.nodes[seriesName]) this.nodes[seriesName] = [];
-                            if(!this.nodes[seriesName][index]) this.nodes[seriesName][index] = this.options.node.create(item, seriesName);
+                            if(!this.nodes[seriesName][index] && this.options.node.create) this.nodes[seriesName][index] = this.options.node.create(item, seriesName);
                     }.bind(this));
                 }.bind(this));
             }else{
@@ -87,10 +99,10 @@ provides: [Fx/Step]
             }
         },
         update : function(){ //global draw elements for the graph
-            var x_min = this.data.minimum('x');
-            var x_max = this.data.maximum('x');
-            var y_min = this.data.minimum('y');
-            var y_max = this.data.maximum('y');
+            var x_min = this.xMin();
+            var x_max = this.xMax();
+            var y_min = this.yMin();
+            var y_max = this.yMax();
             var segments = 8;
             if(
                 //( (!this.xMin) || x_min < this.xMin) ||
@@ -171,10 +183,10 @@ provides: [Fx/Step]
                         this.graduations.vertical[lcv].repaint();
                     }
                 }
-                this.xMin = x_min;
-                this.yMin = y_min;
-                this.xMax = x_max;
-                this.yMax = y_max;
+                //this.xMin = x_min;
+                //this.yMin = y_min;
+                //this.xMax = x_max;
+                //this.yMax = y_max;
             }
         }
     });

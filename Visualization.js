@@ -28,5 +28,20 @@ provides: [Fx/Step]
             this.element = document.id(element);
         },
     });
+    //todo: finish
+    this.Visualization.ColorSet = new Class({
+        position : 0,
+        initialize : function(type, max){
+            if(!type) type = 'monochrome';
+            if(!max) max = 8;
+            switch(type){ //complimentary, supplimentary, monochrome, monochrome+accent
+                case 'monochrome':
+                    
+                    break;
+                default: throw('unsupported type: '+type);
+            }
+        },
+        
+    })
 })();
 
