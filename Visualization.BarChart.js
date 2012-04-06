@@ -137,22 +137,22 @@ Visualization.BarChart = new Class({
         var pos = 0;
         Object.each(seriesValues, function(seriesValue, seriesName){
             var x = pieceWidth*pos*2;
+            var x1 = this.xScale(x);
+            var y1 = this.yScale(0);
+            var x2 = this.xScale(x+pieceWidth);
+            var y2 = this.yScale(seriesValue);
+            if(!this.path[seriesName]) this.path[seriesName] = new Visualization.MutablePath();
+            this.path[seriesName].alterSegment(0, [ 'M', x1, y1 ]);
+            this.path[seriesName].alterSegment(1, [ 'L', x1, y2 ]);
+            this.path[seriesName].alterSegment(2, [ 'L', x2, y2 ]);
+            this.path[seriesName].alterSegment(3, [ 'L', x2, y1 ]);
             if(!this.bar[seriesName]){
-                this.path[seriesName] = new Visualization.MutablePath();
-                var x1 = this.xScale(x);
-                var y1 = this.yScale(0);
-                var x2 = this.xScale(x+pieceWidth);
-                var y2 = this.yScale(seriesValue);
-                this.path[seriesName].alterSegment(0, [ 'M', x1, y1 ]);
-                this.path[seriesName].alterSegment(1, [ 'L', x1, y2 ]);
-                this.path[seriesName].alterSegment(2, [ 'L', x2, y2 ]);
-                this.path[seriesName].alterSegment(3, [ 'L', x2, y1 ]);
                 this.bar[seriesName] = new ART.Shape(this.path[seriesName]);
-                console.log(['bar', x1, y1, x2, y2, size.x, (total*2 + 1)]);
+                //console.log(['bar', x1, y1, x2, y2, size.x, (total*2 + 1)]);
                 this.bar[seriesName].inject(this.art);
                 var color = this.nextColor();
                 this.bar[seriesName].element.setStyle('fill', 'rgb('+color+')');
-            }
+            }else this.bar[seriesName].repaint();
             pos++;
             
         }.bind(this));
@@ -162,5 +162,49 @@ Visualization.BarChart = new Class({
     
     }
 });
+Visualization.BarChart.simple = function(selector, sets){
+        window.graph = new Visualization.BarChart(document.getElements(selector)[0], {
+            node : {
+                size : 8,
+                events :{
+                    create : function(shape){
+                        shape.effect = new Fx.Step(shape, {
+                            link : 'cancel'
+                        });
+                        shape.element.setStyle('fill', '#CCCCFF');
+                    },
+                    mouseover : function(shape){
+                        shape.element.setAttribute('class', 'node selected');
+                        shape.effect.start(1.0, 2.0);
+                    },
+                    mouseout : function(shape){
+                        shape.element.setAttribute('class', 'node');
+                        shape.effect.start(2.0, 1.0);
+                    },
+                    click : function(shape){
+                        this.select(marker);
+                    },
+                    change : function(shape){
+                        
+                    },
+                    select : function(shape){
+                        
+                    }
+                }
+            },
+            events :{
+                create : function(shape, line){
+                    shape.element.setStyle('stroke', nextColor());
+                    if(!shape.closed) shape.element.setStyle('fill', 'none');
+                    else shape.element.setStyle('fill', '#246592');
+                }
+            }
+        });
+        sets.order('x');
+        graph.closed['line1'] = true;
+        graph.bind(sets);
+        //graph.makeDraggable();
+        return graph;
+    };
 })();
 

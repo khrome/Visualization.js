@@ -145,5 +145,49 @@ Visualization.PieChart = new Class({
     
     }
 });
+Visualization.PieChart.simple = function(selector, sets){
+        window.graph = new Visualization.PieChart(document.getElements(selector)[0], {
+            node : {
+                size : 8,
+                events :{
+                    create : function(shape){
+                        shape.effect = new Fx.Step(shape, {
+                            link : 'cancel'
+                        });
+                        shape.element.setStyle('fill', '#CCCCFF');
+                    },
+                    mouseover : function(shape){
+                        shape.element.setAttribute('class', 'node selected');
+                        shape.effect.start(1.0, 2.0);
+                    },
+                    mouseout : function(shape){
+                        shape.element.setAttribute('class', 'node');
+                        shape.effect.start(2.0, 1.0);
+                    },
+                    click : function(shape){
+                        this.select(marker);
+                    },
+                    change : function(shape){
+                        
+                    },
+                    select : function(shape){
+                        
+                    }
+                }
+            },
+            events :{
+                create : function(shape, line){
+                    shape.element.setStyle('stroke', nextColor());
+                    if(!shape.closed) shape.element.setStyle('fill', 'none');
+                    else shape.element.setStyle('fill', '#246592');
+                }
+            }
+        });
+        sets.order('x');
+        graph.closed['line1'] = true;
+        graph.bind(sets);
+        //graph.makeDraggable();
+        return graph;
+    };
 })();
 
