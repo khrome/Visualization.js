@@ -74,23 +74,23 @@ Visualization.LineChart = new Class({
             this.createElements(data, name);
         }
     },
-    makeDraggable : function(){
+    resize : function(){
         var viz = this.element.getChildren()[0];
-        var resize = function(){
-            if(this.element.getStyle('height') > this.element.getStyle('width')) this.element.setStyle('width', this.element.getStyle('height'));
-            else this.element.setStyle('height', this.element.getStyle('width'));
-            viz.setStyle('height', this.element.getStyle('height'));
-            viz.setStyle('width', this.element.getStyle('width'));
-            this.data.eachSeries(function(series, seriesName){
-                this.lineShape[seriesName].repaint();
-                this.markers[seriesName].each(function(marker){
-                    marker.moveTo(this.xScale(marker.xa)-marker.offset, this.yScale(marker.ya)-marker.offset);
-                }.bind(this))
-            }.bind(this));
-            this.update();
-        }.bind(this);
+        if(this.element.getStyle('height') > this.element.getStyle('width')) this.element.setStyle('width', this.element.getStyle('height'));
+        else this.element.setStyle('height', this.element.getStyle('width'));
+        viz.setStyle('height', this.element.getStyle('height'));
+        viz.setStyle('width', this.element.getStyle('width'));
+        this.data.eachSeries(function(series, seriesName){
+            this.lineShape[seriesName].repaint();
+            this.markers[seriesName].each(function(marker){
+                marker.moveTo(this.xScale(marker.xa)-marker.offset, this.yScale(marker.ya)-marker.offset);
+            }.bind(this))
+        }.bind(this));
+        this.update();
+    },
+    makeDraggable : function(){
         this.element.makeResizable({
-            onDrag : resize,
+            onDrag : this.resize,
             snap : 100,
             limit : {x:[100, 500], y:[100, 500]}
         });
@@ -132,7 +132,7 @@ Visualization.LineChart = new Class({
                 if(this.closed[seriesName]) this.line[seriesName].alterSegment(0, [ 
                     'M', 
                     this.xScale(series.data[0][this.options.x_axis]),
-                    this.yScale(series.minimum('y'))
+                    this.yScale(this.yMin())
                 ]);
                 series.each(function(node, position){
                     if(this.closed[seriesName]) position++;
@@ -144,14 +144,14 @@ Visualization.LineChart = new Class({
                 if(this.closed[seriesName]) this.line[seriesName].alterSegment(series.data.length+1, [ 
                     'L', 
                     this.xScale(series.data[series.data.length-1][this.options.x_axis]),
-                    this.yScale(series.minimum('y'))
+                    this.yScale(this.yMin())
                 ]);
                 //console.log([seriesName, this.line[seriesName], this.line[seriesName].toSVG()]);
             }else{
                 if(this.closed[seriesName]) this.line[seriesName].alterSegment(0, [ 
                     'M', 
                     this.xScale(series.data[0][this.options.x_axis]),
-                    this.yScale(series.minimum('y'))
+                    this.yScale(this.yMin())
                 ]);
                 series.each(function(node, position){
                     if(this.closed[seriesName]) position++;
@@ -163,7 +163,7 @@ Visualization.LineChart = new Class({
                 if(this.closed[seriesName]) this.line[seriesName].alterSegment(series.data.length+1, [ 
                     'L', 
                     this.xScale(series.data[series.data.length-1][this.options.x_axis]),
-                    this.yScale(series.minimum('y'))
+                    this.yScale(this.yMin())
                 ]);
             }
             if(!this.lineShape[seriesName]){ //create
@@ -183,6 +183,7 @@ Visualization.LineChart = new Class({
     }
 });
 Visualization.LineChart.simple = function(selector, sets){
+        var colors = ['#246592', '#6F3C98', '#F85726', '#9BC543', '#F6366F'];
         window.graph = new Visualization.LineChart(document.getElements(selector)[0], {
             node : {
                 size : 3,
@@ -211,11 +212,14 @@ Visualization.LineChart.simple = function(selector, sets){
                     }
                 }
             },
+            grid : {
+                minimum : 300
+            },
             events :{
                 create : function(shape, line){
                     shape.element.setStyle('stroke', nextColor());
                     if(!shape.closed) shape.element.setStyle('fill', 'none');
-                    else shape.element.setStyle('fill', '#246592');
+                    else shape.element.setStyle('fill', colors[Math.floor(Math.random()* colors.length)]);
                 }
             }
         });

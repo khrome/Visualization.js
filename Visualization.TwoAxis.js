@@ -19,6 +19,7 @@ provides: [Fx/Step]
     }
     Visualization.TwoAxis = new Class({
         Extends : Visualization,
+        text : false,
         graduations : {vertical:{}, horizontal:{}},
         initialize: function(element, options){
             if(!options.rightPadding) options.rightPadding = 10;
@@ -47,6 +48,9 @@ provides: [Fx/Step]
         computeBoundaries : function(){
             
         },
+        resize : function(){
+            this.update();
+        },
         bind : function(data){
             this.data = data;
             this.redraw();
@@ -55,20 +59,22 @@ provides: [Fx/Step]
             return this.data.minimum('x');
         },
         yMin : function(){
-            return this.data.minimum('y');
+            return this.data.minimum('y') - (this.data.maximum('y') - this.data.minimum('y'))*0.2;
         },
         xMax : function(){
             return this.data.maximum('x');
         },
         yMax : function(){
-            return this.data.maximum('y');
+            return this.data.maximum('y') + (this.data.maximum('y') - this.data.minimum('y'))*0.2;
         },
         xScale : function(x){
             var x_min = this.xMin();
             var x_max = this.xMax();
             var padSize = this.options.leftPadding + this.options.rightPadding;
             var range = x_max - x_min;
-            var result = this.options.leftPadding + (x-x_min)*((this.element.getSize().x-padSize)/range);
+            var width = this.element.getSize().x;
+            var result = this.options.leftPadding + (x-x_min)*(((width-padSize)/range));
+            //console.log(['xs', result, (x-x_min), x_min, x, range, width-padSize, (((width-padSize)/range))]);
             return result;
         },
         yScale : function(y){
@@ -104,12 +110,12 @@ provides: [Fx/Step]
             var y_min = this.yMin();
             var y_max = this.yMax();
             var segments = 8;
-            if(
-                //( (!this.xMin) || x_min < this.xMin) ||
-                //( (!this.yMin) || y_min < this.yMin) ||
-                //( (!this.xMax) || x_max > this.xMax) ||
-                //( (!this.yMax) || y_max > this.yMax)
-                true
+            var size = this.element.getSize();
+            //todo: only if diff
+            if( this.options.grid &&
+                ( 
+                    (this.options.grid.minimum && size.x > this.options.grid.minimum)
+                )
             ){
                 var horizontal_range = x_max - x_min;
                 var horizontal_padding = this.options.leftPadding + this.options.rightPadding;
@@ -138,7 +144,9 @@ provides: [Fx/Step]
                         horizontal_line.inject(this.art);
                         this.graduations.horizontal[lcv] = horizontal_line;
                     }else{
+                        this.graduations.horizontal[lcv].show();
                         if(this.graduations.horizontal[lcv].label){
+                            this.graduations.horizontal[lcv].label.show();
                             this.graduations.horizontal[lcv].label.moveTo(this.xScale(x_min), y);
                             this.graduations.horizontal[lcv].label.resizeTo((mincrement/8)*String.from(label).length, mincrement/3);
                             if(lcv == segments-1){
@@ -163,7 +171,9 @@ provides: [Fx/Step]
                         vertical_line.inject(this.art);
                         this.graduations.vertical[lcv] = vertical_line;
                     }else{
+                        this.graduations.vertical[lcv].show();
                         if(this.graduations.vertical[lcv].label){
+                            this.graduations.vertical[lcv].label.show();
                             this.graduations.vertical[lcv].label.moveTo(x, this.yScale(y_min)-mincrement/3);
                             this.graduations.vertical[lcv].label.resizeTo(
                                 (mincrement/8)*String.from(label).length,
@@ -183,10 +193,13 @@ provides: [Fx/Step]
                         this.graduations.vertical[lcv].repaint();
                     }
                 }
-                //this.xMin = x_min;
-                //this.yMin = y_min;
-                //this.xMax = x_max;
-                //this.yMax = y_max;
+            }else{
+                for(var lcv=0; lcv < segments; lcv++){
+                    if(this.graduations.horizontal[lcv]) this.graduations.horizontal[lcv].hide();
+                    if(this.graduations.horizontal[lcv] && this.graduations.horizontal[lcv].label) this.graduations.horizontal[lcv].label.hide();
+                    if(this.graduations.vertical[lcv]) this.graduations.vertical[lcv].hide();
+                    if(this.graduations.vertical[lcv] && this.graduations.vertical[lcv].label) this.graduations.vertical[lcv].label.hide();
+                }
             }
         }
     });
