@@ -56,16 +56,16 @@ provides: [Fx/Step]
             this.redraw();
         },
         xMin : function(){
-            return this.data.minimum('x');
+            return this.data.minimum(this.options.x_axis);
         },
         yMin : function(){
-            return this.data.minimum('y') - (this.data.maximum('y') - this.data.minimum('y'))*0.2;
+            return this.data.minimum(this.options.y_axis) - (this.data.maximum(this.options.y_axis) - this.data.minimum(this.options.y_axis))*0.2;
         },
         xMax : function(){
-            return this.data.maximum('x');
+            return this.data.maximum(this.options.x_axis);
         },
         yMax : function(){
-            return this.data.maximum('y') + (this.data.maximum('y') - this.data.minimum('y'))*0.2;
+            return this.data.maximum(this.options.y_axis) + (this.data.maximum(this.options.y_axis) - this.data.minimum(this.options.y_axis))*0.2;
         },
         xScale : function(x){
             var x_min = this.xMin();
@@ -133,6 +133,7 @@ provides: [Fx/Step]
                     var label = Math.floor(y_min + (segments - lcv-1) * vertical_increment);
                     if(!this.graduations.horizontal[lcv]){
                         horizontal_line = (makeLine(this.xScale(x_min), y, this.xScale(x_max), y));
+                        //*
                         horizontal_line.label = new ART.Text(label);
                         horizontal_line.label.moveTo(this.xScale(x_min), y);
                         horizontal_line.label.resizeTo(
@@ -140,11 +141,12 @@ provides: [Fx/Step]
                             mincrement/3
                         );
                         horizontal_line.label.element.setAttribute('fill', this.options.labelColor);
-                        horizontal_line.label.inject(this.art);
+                        horizontal_line.label.inject(this.art);//*/
                         horizontal_line.inject(this.art);
                         this.graduations.horizontal[lcv] = horizontal_line;
                     }else{
                         this.graduations.horizontal[lcv].show();
+                        //*
                         if(this.graduations.horizontal[lcv].label){
                             this.graduations.horizontal[lcv].label.show();
                             this.graduations.horizontal[lcv].label.moveTo(this.xScale(x_min), y);
@@ -153,26 +155,26 @@ provides: [Fx/Step]
                                 this.graduations.horizontal[lcv].label.move(0, -1*vertical_increment/2);
                                 //console.log('surprise, you\'re dead')
                             }
-                        }
+                        }//*/
                         this.graduations.horizontal[lcv].path.alterSegment(0, ['M', this.xScale(x_min), y]);
                         this.graduations.horizontal[lcv].path.alterSegment(1, ['L', this.xScale(x_max), y]);
                         this.graduations.horizontal[lcv].repaint();
                     }
                     if(!this.graduations.vertical[lcv]){
                         vertical_line = (makeLine(x, this.yScale(y_min), x, this.yScale(y_max)));
-                        vertical_line.label = new ART.Text(Math.floor(x_min + (lcv) * horizontal_increment));
+                        /*vertical_line.label = new ART.Text(Math.floor(x_min + (lcv) * horizontal_increment));
                         vertical_line.label.moveTo(x, this.yScale(y_min));
                         vertical_line.label.resizeTo(
                             (mincrement/8)*String.from(label).length,
                             mincrement/3
                         );
                         vertical_line.label.element.setAttribute('fill', this.options.labelColor);
-                        vertical_line.label.inject(this.art);
+                        vertical_line.label.inject(this.art);*/
                         vertical_line.inject(this.art);
                         this.graduations.vertical[lcv] = vertical_line;
                     }else{
                         this.graduations.vertical[lcv].show();
-                        if(this.graduations.vertical[lcv].label){
+                        /*if(this.graduations.vertical[lcv].label){
                             this.graduations.vertical[lcv].label.show();
                             this.graduations.vertical[lcv].label.moveTo(x, this.yScale(y_min)-mincrement/3);
                             this.graduations.vertical[lcv].label.resizeTo(
@@ -187,7 +189,7 @@ provides: [Fx/Step]
                                 this.graduations.vertical[lcv].label.move((mincrement/8)*String.from(label).length-horizontal_increment/2, 0);
                             }
                             this.graduations.vertical[lcv].label.rotateTo(-45);
-                        }
+                        }*/
                         this.graduations.vertical[lcv].path.alterSegment(0, ['M', x, this.yScale(y_min)]);
                         this.graduations.vertical[lcv].path.alterSegment(1, ['L', x, this.yScale(y_max)]);
                         this.graduations.vertical[lcv].repaint();

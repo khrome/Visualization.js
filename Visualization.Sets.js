@@ -51,6 +51,10 @@ provides: [Fx/Step]
                 //todo: with and without set name order(setName, axis, direction), order(axis, direction), order(setName, axis), order(axis)
             }
         },
+        filter : function(setName, axis, minimum, maximum){
+            //drop down to internal set filter (buffer full set internally);
+            
+        },
         minimum : function(setName, axis){
             if(setName && !axis){
                 var res = Number.MAX_VALUE;

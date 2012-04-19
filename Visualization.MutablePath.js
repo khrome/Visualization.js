@@ -73,6 +73,7 @@ provides: [Fx/Step]
 	            default :
 	                thow('unsupported segment return type:'+format);
 	        }
+	        if(result.contains('NaN')) throw Exception('your path is wonked');
 	        return result;
 	    },
 	    toSVG : function(){
