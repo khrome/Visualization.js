@@ -185,7 +185,7 @@ Visualization.LineChart = new Class({
 Visualization.LineChart.simple = function(selector, sets){
         var colors = ['#246592', '#6F3C98', '#F85726', '#9BC543', '#F6366F'];
         window.graph = new Visualization.LineChart(document.getElements(selector)[0], {
-            x_axis : 'year',
+            x_axis : 'date',
             y_axis : 'value',
             node : {
                 size : 3,
@@ -225,7 +225,7 @@ Visualization.LineChart.simple = function(selector, sets){
                 }
             }
         });
-        sets.order('year');
+        sets.order('date');
         graph.closed['line1'] = true;
         graph.bind(sets);
         //graph.makeDraggable();
