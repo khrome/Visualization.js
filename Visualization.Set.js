@@ -146,5 +146,17 @@ provides: [Fx/Step]
             this.listeners.change.each(function(listener){ listener(item); });
         }
     });
+    Visualization.Set.random = function(){
+        var result = [];
+        var loopCount = 10 + Math.floor(Math.random()*11);
+        var distance = 200/loopCount;
+        var lastValue = 100;
+        var current;
+        for(var lcv=0; lcv < loopCount; lcv++){
+            current = Math.floor(Math.random()*101)-50;
+            result.push({x:(lcv*distance),y:(lastValue-current)});
+        }
+        return result;
+    }
 })();
 
